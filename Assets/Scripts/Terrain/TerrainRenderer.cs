@@ -298,7 +298,7 @@ namespace Terrain
         {
             var tileY = tile.position.Y;
 
-            if (tileY > centerY && tileY - 1 > leftY)
+            if (tileY > centerY && tileY - 1 > leftY && centerY > leftY)
             {
                 var h0 = (tileY - centerY - 1) * -4f;
                 var h1 = h0 - WallEdgeWidth;
@@ -334,7 +334,7 @@ namespace Terrain
             int rightY)
         {
             var tileY = tile.position.Y;
-            if (tileY - 1 >= centerY && tileY - 1 > rightY)
+            if (tileY > centerY && tileY - 1 > rightY && centerY > rightY)
             {
                 var h0 = (tileY - centerY - 1) * -4f;
                 var h1 = h0 - WallEdgeWidth;
