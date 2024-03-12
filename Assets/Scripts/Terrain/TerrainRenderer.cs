@@ -72,10 +72,14 @@ namespace Terrain
             // Remove all child objects
             for (var i = transform.childCount - 1; i >= 0; i--)
             {
-                if (Application.isPlaying)
-                    Destroy(transform.GetChild(i).gameObject);
-                else
-                    DestroyImmediate(transform.GetChild(i).gameObject);
+                var child = transform.GetChild(i).gameObject;
+                if (child.name.StartsWith("Terrain"))
+                {
+                    if (Application.isPlaying)
+                        Destroy(transform.GetChild(i).gameObject);
+                    else
+                        DestroyImmediate(transform.GetChild(i).gameObject);
+                }
             }
 
             // Create mesh data
@@ -131,7 +135,7 @@ namespace Terrain
             }
 
             // Generate the mesh
-            meshData.Apply(gameObject, material);
+            meshData.Apply(gameObject, material, "Terrain");
         }
 
         private static void RenderCenter(TerrainTile tile, MeshData meshData)

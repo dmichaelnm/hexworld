@@ -23,7 +23,7 @@ namespace Terrain
             internal readonly Vector3 PositionDistorted;
 
             internal readonly Vector3 PositionOriginal;
-            
+
             /// <summary>
             /// Normalized X coordinate.
             /// </summary>
@@ -38,16 +38,16 @@ namespace Terrain
             /// Normalized Z coordinate.
             /// </summary>
             private readonly int m_Z;
-            
+
             /// <summary>
             /// Represents a vertex in a hexagon grid.
             /// </summary>
             /// <param name="position">The position of the hexagon.</param>
             /// <param name="vertexIndex">The index of the vertex.</param>
-            /// <param name="localHeightUnit">The local height unit of the hexagon.</param>
+            /// <param name="heightUnit">The local height unit of the hexagon.</param>
             /// <param name="distortion">Terrain distortion parameter.</param>
-            public Vertex(HexagonPosition position, int vertexIndex, float localHeightUnit,
-                TerrainDistortion distortion)
+            public Vertex(TerrainDistortion distortion, HexagonPosition position, int vertexIndex, float heightUnit,
+                bool local = true)
             {
                 var center = position.Center;
                 var baseX = center.x - TerrainUtilities.HexagonHalfWidth;
@@ -57,11 +57,11 @@ namespace Terrain
                 var vx = vertexIndex - vz * 33;
 
                 var x = baseX + TerrainUtilities.HexagonWidth / 32f * vx;
-                var y = center.y + localHeightUnit * TerrainUtilities.HexagonHeightUnit;
+                var y = local ? center.y + heightUnit * TerrainUtilities.HexagonHeightUnit : heightUnit;
                 var z = baseZ + 1f / 64f * vz;
 
                 PositionOriginal = new Vector3(x, y, z);
-                
+
                 var xx = (Mathf.PerlinNoise(
                     (x + distortion.xOffset.x) * distortion.horizontalFrequency,
                     (z + distortion.xOffset.y) * distortion.horizontalFrequency
@@ -75,7 +75,7 @@ namespace Terrain
                     (y + distortion.xOffset.y) * distortion.horizontalFrequency
                 ) - 0.5f) * distortion.horizontalAmplitude;
                 x += (xx + xy + xz) / 3f;
-                
+
                 var zx = (Mathf.PerlinNoise(
                     (x + distortion.zOffset.x) * distortion.horizontalFrequency,
                     (z + distortion.zOffset.y) * distortion.horizontalFrequency
@@ -88,8 +88,8 @@ namespace Terrain
                     (z + distortion.zOffset.x) * distortion.horizontalFrequency,
                     (y + distortion.zOffset.y) * distortion.horizontalFrequency
                 ) - 0.5f) * distortion.horizontalAmplitude;
-                z += (zx + zy +zz) / 3f;
-                
+                z += (zx + zy + zz) / 3f;
+
                 y += Mathf.PerlinNoise(
                     x * distortion.verticalFrequency,
                     z * distortion.verticalFrequency
@@ -186,11 +186,11 @@ namespace Terrain
         /// </summary>
         /// <param name="position">The position of the hexagon.</param>
         /// <param name="vertexIndex">The index of the vertex within the hexagon.</param>
-        /// <param name="localHeightUnit">The local height unit of the vertex.</param>
-        public void Add(HexagonPosition position, int vertexIndex, float localHeightUnit)
+        /// <param name="heightUnit">The local height unit of the vertex.</param>
+        public void Add(HexagonPosition position, int vertexIndex, float heightUnit, bool local = true)
         {
             // Create the vertex instance
-            var vertex = new Vertex(position, vertexIndex, localHeightUnit, m_Distortion);
+            var vertex = new Vertex(m_Distortion, position, vertexIndex, heightUnit, local);
 
             // Add the vertex only if it does not exist yet in the dictionary.
             if (!m_Vertices.ContainsKey(vertex))
@@ -211,7 +211,7 @@ namespace Terrain
         /// </summary>
         /// <param name="parent">The parent object to apply the mesh.</param>
         /// <param name="material">The material used for the mesh.</param>
-        public void Apply(GameObject parent, Material material)
+        public void Apply(GameObject parent, Material material, string prefix)
         {
             var vertices = new Vector3[m_Vertices.Count];
             var uv = new Vector2[m_Vertices.Count];
@@ -235,7 +235,7 @@ namespace Terrain
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
 
-            var child = new GameObject($"{material.name}");
+            var child = new GameObject($"{prefix}_{material.name}");
             child.transform.SetParent(parent.transform);
 
             var filter = child.AddComponent<MeshFilter>();

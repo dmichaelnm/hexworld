@@ -13,6 +13,8 @@ namespace Terrain
         /// </summary>
         public HexagonPosition position { get; private set; }
 
+        public bool IsWater => position.Y < 0;
+
         /// <summary>
         /// Represents the terrain manager.
         /// </summary>
@@ -54,6 +56,26 @@ namespace Terrain
             neighbours[2] = GetNeighbour((HexagonDirection)(d < 5 ? d + 1 : 0));
 
             return neighbours;
+        }
+
+        public bool HasCoast()
+        {
+            for (var d = 0; d < 6; d++)
+            {
+                if (HasCoast((HexagonDirection)d))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool HasCoast(HexagonDirection direction)
+        {
+            var neighbour = GetNeighbour(direction);
+            if (position.Y >= 0)
+                return neighbour is { position: { Y: < 0 } };
+
+            return neighbour is { position: { Y: >= 0 } };
         }
 
         /// <summary>

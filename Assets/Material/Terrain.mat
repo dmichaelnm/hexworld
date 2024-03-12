@@ -52,6 +52,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: f48e8217a18b5914cb24e4b075abb366, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Grid:
+        m_Texture: {fileID: 2800000, guid: 704c6c4a3bbb73f448fddc28d96acfba, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: f48e8217a18b5914cb24e4b075abb366, type: 3}
         m_Scale: {x: 4, y: 4}
@@ -123,6 +127,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _Grid_Strength: 0.173
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -145,7 +150,9 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Shore_Boundaries: {r: -0.025, g: 0.015, b: 0, a: 0}
+    - _Grid_Offset: {r: 0, g: -0.16666, b: 0, a: 0}
+    - _Grid_Tiling: {r: 12.5, g: 6.16666, b: 0, a: 0}
+    - _Shore_Boundaries: {r: -0.025, g: 0.05, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3195257916174012650
