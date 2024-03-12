@@ -67,13 +67,8 @@ namespace Terrain
         public Material material;
         public TerrainDistortion distortion;
 
-        private TerrainManager m_TerrainManager;
-
-        public void Render()
+        public void Render(TerrainManager terrainManager)
         {
-            // Get the terrain manager
-            m_TerrainManager ??= GetComponent<TerrainManager>();
-
             // Remove all child objects
             for (var i = transform.childCount - 1; i >= 0; i--)
             {
@@ -87,9 +82,9 @@ namespace Terrain
             var meshData = new MeshData(distortion);
 
             // Iterate over all tiles
-            for (var i = 0; i < m_TerrainManager.terrainSize.size; i++)
+            for (var i = 0; i < terrainManager.terrainSize.size; i++)
             {
-                var tile = m_TerrainManager[i];
+                var tile = terrainManager[i];
                 if (tile != null)
                 {
                     // Render the center plane.

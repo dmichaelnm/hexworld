@@ -25,6 +25,8 @@ namespace Editor.Terrain
         /// </summary>
         private TerrainRenderer m_TerrainRenderer;
 
+        private WaterRenderer m_WaterRenderer;
+
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
@@ -32,13 +34,15 @@ namespace Editor.Terrain
             if (GUILayout.Button("Clear All"))
             {
                 m_TerrainManager.InitializeTiles(false);
-                m_TerrainRenderer.Render();
+                m_TerrainRenderer.Render(m_TerrainManager);
+                m_WaterRenderer.Render(m_TerrainManager);
             }
 
             if (GUILayout.Button("Fill All"))
             {
                 m_TerrainManager.InitializeTiles(true);
-                m_TerrainRenderer.Render();
+                m_TerrainRenderer.Render(m_TerrainManager);
+                m_WaterRenderer.Render(m_TerrainManager);
             }
         }
 
@@ -49,6 +53,7 @@ namespace Editor.Terrain
         {
             m_TerrainManager = (TerrainManager)target;
             m_TerrainRenderer = m_TerrainManager.GetComponent<TerrainRenderer>();
+            m_WaterRenderer = m_TerrainManager.GetComponent<WaterRenderer>();
         }
 
         /// <summary>
@@ -101,8 +106,9 @@ namespace Editor.Terrain
                                 // Create a new tile at the selected position
                                 m_TerrainManager[hexPos] = new TerrainTile(m_TerrainManager, hexPos);
 
-                            // Render the terrain
-                            m_TerrainRenderer.Render();
+                            // Render the terrain and water
+                            m_TerrainRenderer.Render(m_TerrainManager);
+                            m_WaterRenderer.Render(m_TerrainManager);
                         }
                     }
                 }

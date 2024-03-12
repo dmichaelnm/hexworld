@@ -20,8 +20,10 @@ namespace Terrain
             /// <summary>
             /// Represents the position of the vertex in three dimensional space.
             /// </summary>
-            internal readonly Vector3 Position;
+            internal readonly Vector3 PositionDistorted;
 
+            internal readonly Vector3 PositionOriginal;
+            
             /// <summary>
             /// Normalized X coordinate.
             /// </summary>
@@ -36,7 +38,7 @@ namespace Terrain
             /// Normalized Z coordinate.
             /// </summary>
             private readonly int m_Z;
-
+            
             /// <summary>
             /// Represents a vertex in a hexagon grid.
             /// </summary>
@@ -58,6 +60,8 @@ namespace Terrain
                 var y = center.y + localHeightUnit * TerrainUtilities.HexagonHeightUnit;
                 var z = baseZ + 1f / 64f * vz;
 
+                PositionOriginal = new Vector3(x, y, z);
+                
                 var xx = (Mathf.PerlinNoise(
                     (x + distortion.xOffset.x) * distortion.horizontalFrequency,
                     (z + distortion.xOffset.y) * distortion.horizontalFrequency
@@ -72,10 +76,19 @@ namespace Terrain
                 ) - 0.5f) * distortion.horizontalAmplitude;
                 x += (xx + xy + xz) / 3f;
                 
-                z += (Mathf.PerlinNoise(
+                var zx = (Mathf.PerlinNoise(
                     (x + distortion.zOffset.x) * distortion.horizontalFrequency,
                     (z + distortion.zOffset.y) * distortion.horizontalFrequency
                 ) - 0.5f) * distortion.horizontalAmplitude;
+                var zy = (Mathf.PerlinNoise(
+                    (x + distortion.zOffset.x) * distortion.horizontalFrequency,
+                    (y + distortion.zOffset.y) * distortion.horizontalFrequency
+                ) - 0.5f) * distortion.horizontalAmplitude;
+                var zz = (Mathf.PerlinNoise(
+                    (z + distortion.zOffset.x) * distortion.horizontalFrequency,
+                    (y + distortion.zOffset.y) * distortion.horizontalFrequency
+                ) - 0.5f) * distortion.horizontalAmplitude;
+                z += (zx + zy +zz) / 3f;
                 
                 y += Mathf.PerlinNoise(
                     x * distortion.verticalFrequency,
@@ -86,7 +99,7 @@ namespace Terrain
                 m_Y = Mathf.RoundToInt(y * F);
                 m_Z = Mathf.RoundToInt(z * F);
 
-                Position = new Vector3(x, y, z);
+                PositionDistorted = new Vector3(x, y, z);
             }
 
             /// <summary>
@@ -187,10 +200,10 @@ namespace Terrain
             m_Triangles.Add(m_Vertices[vertex]);
 
             // Update the boundary values
-            m_MinX = Mathf.Min(m_MinX, vertex.Position.x);
-            m_MaxX = Mathf.Max(m_MaxX, vertex.Position.x);
-            m_MinZ = Mathf.Min(m_MinZ, vertex.Position.z);
-            m_MaxZ = Mathf.Max(m_MaxZ, vertex.Position.z);
+            m_MinX = Mathf.Min(m_MinX, vertex.PositionOriginal.x);
+            m_MaxX = Mathf.Max(m_MaxX, vertex.PositionOriginal.x);
+            m_MinZ = Mathf.Min(m_MinZ, vertex.PositionOriginal.z);
+            m_MaxZ = Mathf.Max(m_MaxZ, vertex.PositionOriginal.z);
         }
 
         /// <summary>
@@ -206,8 +219,8 @@ namespace Terrain
             var index = 0;
             foreach (var vertex in m_Vertices.Keys)
             {
-                vertices[index] = vertex.Position;
-                uv[index] = new Vector2(vertex.Position.x / width, vertex.Position.z / length);
+                vertices[index] = vertex.PositionDistorted;
+                uv[index] = new Vector2(vertex.PositionOriginal.x / width, vertex.PositionOriginal.z / length);
                 index++;
             }
 
