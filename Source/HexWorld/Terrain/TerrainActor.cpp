@@ -89,6 +89,7 @@ ATerrainActor::ATerrainActor()
 	HeightFactor = 8;
 	HeightUnit = 0.025;
 	WallEdgeHeight = 0.5;
+	WaterOffset = 0.0;
 	Scale = 100.0;
 }
 
@@ -113,7 +114,8 @@ void ATerrainActor::Tick(const float DeltaTime)
  */
 void ATerrainActor::Clear() const
 {
-	MeshComponent->ClearMeshSection(0);	
+	MeshComponent->ClearMeshSection(0);
+	MeshComponent->ClearMeshSection(1);
 }
 
 /**
@@ -141,6 +143,10 @@ void ATerrainActor::Build()
 	const auto TerrainMeshData = GenerateTerrainMeshData();
 	// Build the terrain mesh
 	BuildMesh(0, TerrainMeshData, TerrainMaterial);
+	// Generate water mesh data
+	const auto WaterMeshData = GenerateWaterMeshData();
+	// Build the water mesh
+	BuildMesh(1, WaterMeshData, WaterMaterial);
 }
 
 /**
@@ -208,6 +214,57 @@ void ATerrainActor::BuildMesh(const int32 Section, const FMeshData& MeshData, UM
 	// Log
 	UE_LOG(TerrainActor, Display, TEXT("Mesh section %d created (Vertices: %d, Triangles: %d)"), Section,
 	       Vertices.Num(), Triangles.Num());
+}
+
+/**
+ * Generates the mesh data for the water mesh.
+ * 
+ * @return Mesh data struct. 
+ */
+FMeshData ATerrainActor::GenerateWaterMeshData() const
+{
+	// The mesh data struct
+	auto MeshData = FMeshData();
+
+	// Calculate the height of the vertices
+	const auto Height = HeightUnit * 3.0 - WaterOffset;
+
+	// Iterate over all tiles
+	for (const auto& Tile : Tiles)
+	{
+		if (Tile.Position.Z <= 0 || HasCoast(Tile))
+		{
+			for (auto Row = 0; Row < 8; Row++)
+			{
+				for (auto Col = 0; Col < 9 + Row; Col++)
+				{
+					const auto Offset = Col * 68 + Row * 64;
+
+					AddVertex(MeshData, Tile, 16 + Offset, Height, true);
+					AddVertex(MeshData, Tile, 80 + Offset, Height, true);
+					AddVertex(MeshData, Tile, 148 + Offset, Height, true);
+
+					AddVertex(MeshData, Tile, 1996 - Offset, Height, true);
+					AddVertex(MeshData, Tile, 2128 - Offset, Height, true);
+					AddVertex(MeshData, Tile, 2064 - Offset, Height, true);
+
+					if (Col < 8 + Row)
+					{
+						AddVertex(MeshData, Tile, 16 + Offset, Height, true);
+						AddVertex(MeshData, Tile, 148 + Offset, Height, true);
+						AddVertex(MeshData, Tile, 84 + Offset, Height, true);
+
+						AddVertex(MeshData, Tile, 1996 - Offset, Height, true);
+						AddVertex(MeshData, Tile, 2060 - Offset, Height, true);
+						AddVertex(MeshData, Tile, 2128 - Offset, Height, true);
+					}
+				}
+			}
+		}
+	}
+
+	// Return the mesh data struct
+	return MeshData;
 }
 
 /**
@@ -797,6 +854,45 @@ const FTile* ATerrainActor::GetTile(const int32 X, const int32 Y) const
 
 	// Invalid coordinates, return null pointer
 	return nullptr;
+}
+
+/**
+ * Checks if there is water in the specified direction for the specified tile.
+ * 
+ * @param Tile The tile to be checked for having a coast.
+ * @param Direction The direction that is checked.
+ * 
+ * @return If there is water in the specified direction then <b>true</b>, otherwise <b>false</b>. 
+ */
+bool ATerrainActor::HasCoast(const FTile& Tile, const ETileDirection Direction) const
+{
+	// Get the neighbour tile
+	const auto Neighbour = GetNeighbour(Tile, Direction);
+	// Check, if the neighbour is water
+	return Neighbour != nullptr ? Neighbour->Position.Z <= 0 : false;
+}
+
+/**
+ * Checks if there is water in any direction of the specified tile.
+ * 
+ * @param Tile The tile to be checked for having a coast.
+ * 
+ * @return If there is water in at least one direction then <b>true</b>, otherwise <b>false</b>. 
+ */
+bool ATerrainActor::HasCoast(const FTile& Tile) const
+{
+	// Iterate over all directions
+	for (const auto Direction : TEnumRange<ETileDirection>())
+	{
+		// Check for coast
+		if (HasCoast(Tile, Direction))
+		{
+			// At least one coast was found, thats enough
+			return true;
+		}
+	}
+	// No coast found
+	return false;
 }
 
 /**

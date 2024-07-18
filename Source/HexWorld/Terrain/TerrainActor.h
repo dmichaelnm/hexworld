@@ -56,8 +56,14 @@ protected:
 	/**
 	 * The material to be applied to the terrain mesh.
 	 */
-	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Terrain")
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Materials")
 	UMaterialInterface* TerrainMaterial;
+
+	/**
+	 * The material to be applied to the water mesh.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Materials")
+	UMaterialInterface* WaterMaterial;
 
 	/**
 	 * A texture containing informationen about the topography of the terrain.
@@ -86,6 +92,12 @@ protected:
 	double WallEdgeHeight;
 
 	/**
+	 * The offset height of the water mesh.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Mesh")
+	double WaterOffset;
+
+	/**
 	 * The scale amount for the mesh vertices.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Mesh")
@@ -97,7 +109,7 @@ public:
 	 */
 	UFUNCTION(CallInEditor, Category = "Terrain Properties")
 	void Clear() const;
-	
+
 	/**
 	 * Builds the meshes for the terrain and the water.
 	 */
@@ -138,6 +150,13 @@ private:
 	 * @param Material The material to be applied to the mesh.
 	 */
 	void BuildMesh(const int32 Section, const FMeshData& MeshData, UMaterialInterface* Material) const;
+
+	/**
+	 * Generates the mesh data for the water mesh.
+	 * 
+	 * @return Mesh data struct. 
+	 */
+	FMeshData GenerateWaterMeshData() const;
 
 	/**
 	 * Generates the mesh data for the terrain mesh.
@@ -320,6 +339,25 @@ private:
 	 */
 	const FTile* GetTile(const int32 X, const int32 Y) const;
 
+	/**
+	 * Checks if there is water in the specified direction for the specified tile.
+	 * 
+	 * @param Tile The tile to be checked for having a coast.
+	 * @param Direction The direction that is checked.
+	 * 
+	 * @return If there is water in the specified direction then <b>true</b>, otherwise <b>false</b>. 
+	 */
+	bool HasCoast(const FTile& Tile, const ETileDirection Direction) const;
+
+	/**
+	 * Checks if there is water in any direction of the specified tile.
+	 * 
+	 * @param Tile The tile to be checked for having a coast.
+	 * 
+	 * @return If there is water in at least one direction then <b>true</b>, otherwise <b>false</b>. 
+	 */
+	bool HasCoast(const FTile& Tile) const;
+	
 	/**
 	 * Calculate the heights of the vertices for the left or right inner corner of the tile mesh. An array with four
 	 * items containing the heights of the four vertices is returned.
