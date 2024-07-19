@@ -141,8 +141,16 @@ void ATerrainActor::Build()
 
 	// Generate terrain mesh data.
 	const auto TerrainMeshData = GenerateTerrainMeshData();
+	// Generate dynamic terrain material
+	const auto DynamicTerrainMaterial = UMaterialInstanceDynamic::Create(
+		TerrainMaterial, nullptr, TEXT("Dynamic Terrain Material"));
+	// Set scale parameter
+	DynamicTerrainMaterial->SetScalarParameterValue(TEXT("Scale"), Scale);
+	// Set grid tiling parameter
+	DynamicTerrainMaterial->SetScalarParameterValue(TEXT("Grid Tile X"), SizeX + 0.5);
+	DynamicTerrainMaterial->SetScalarParameterValue(TEXT("Grid Tile Y"), (SizeY * 0.75 + 0.25) / 1.5);
 	// Build the terrain mesh
-	BuildMesh(0, TerrainMeshData, TerrainMaterial);
+	BuildMesh(0, TerrainMeshData, DynamicTerrainMaterial);
 	// Generate water mesh data
 	const auto WaterMeshData = GenerateWaterMeshData();
 	// Build the water mesh
