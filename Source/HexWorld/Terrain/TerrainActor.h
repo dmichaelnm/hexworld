@@ -7,6 +7,7 @@
 
 #include "CoreMinimal.h"
 #include "MeshData.h"
+#include "NoiseParameter.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
 #include "Tile.h"
@@ -102,6 +103,24 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Mesh")
 	double Scale;
+
+	/**
+	 * Noise parameter for the X axis.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Distortion")
+	FNoiseParameter NoiseParameterX;
+
+	/**
+	 * Noise parameter for the Y axis.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Distortion")
+	FNoiseParameter NoiseParameterY;
+
+	/**
+	 * Noise parameter for the Z axis.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Terrain Properties|Distortion")
+	FNoiseParameter NoiseParameterZ;
 
 public:
 	/**
@@ -281,10 +300,11 @@ private:
 	 * @param Index The index of the vertex position within a tile.
 	 * @param Height The height of the vertex in height units. If <i>Absolute</i> is <b>true</b>,
 	 *               the height is used as specified and not in height units.
-	 * @param Absolute If <b>true</b>, the height is used as is and is not multiplied with the height unit.  
+	 * @param Absolute If <b>true</b>, the height is used as is and is not multiplied with the height unit.
+	 * @param NoDistortion If <b>true</b>, the vertext will be distorted, otherwise not.
 	 */
 	void AddVertex(FMeshData& MeshData, const FTile& Tile, const int32 Index, const double Height,
-	               const bool Absolute = false) const;
+	               const bool Absolute = false, const bool NoDistortion = false) const;
 
 	/**
 	 * Adds a new triangle to the mesh data struct. The vertices are calculated by the specified direction and the
@@ -357,7 +377,7 @@ private:
 	 * @return If there is water in at least one direction then <b>true</b>, otherwise <b>false</b>. 
 	 */
 	bool HasCoast(const FTile& Tile) const;
-	
+
 	/**
 	 * Calculate the heights of the vertices for the left or right inner corner of the tile mesh. An array with four
 	 * items containing the heights of the four vertices is returned.
@@ -399,4 +419,28 @@ private:
 	 * @return Array of vectors. 
 	 */
 	static TArray<FVector> CalculateNormalArray(const FMeshData& MeshData);
+
+	/**
+	 * Calculates a noise value for the specified coordinates and the noise parameter.
+	 * 
+	 * @param Px X coordinate. 
+	 * @param Py Y coordinate.
+	 * @param Params Noise parameter.
+	 * 
+	 * @return The noise value. 
+	 */
+	static double Noise(const double Px, const double Py, const FNoiseParameter& Params);
+
+	/**
+	 * Calculates a noise vector based on the specified vertex and the noise parameter for each axis.
+	 * 
+	 * @param Vertex Original vertex.
+	 * @param ParamsX Noise parameter for X axis.
+	 * @param ParamsY Noise parameter for Y axis.
+	 * @param ParamsZ Noise parameter for Z axis.
+	 * 
+	 * @return The noise vector. 
+	 */
+	static FVector Noise(const FVector& Vertex, const FNoiseParameter& ParamsX, const FNoiseParameter& ParamsY,
+	                     const FNoiseParameter& ParamsZ);
 };

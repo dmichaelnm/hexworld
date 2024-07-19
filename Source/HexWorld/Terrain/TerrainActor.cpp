@@ -248,23 +248,23 @@ FMeshData ATerrainActor::GenerateWaterMeshData() const
 				{
 					const auto Offset = Col * 68 + Row * 64;
 
-					AddVertex(MeshData, Tile, 16 + Offset, Height, true);
-					AddVertex(MeshData, Tile, 80 + Offset, Height, true);
-					AddVertex(MeshData, Tile, 148 + Offset, Height, true);
+					AddVertex(MeshData, Tile, 16 + Offset, Height, true, true);
+					AddVertex(MeshData, Tile, 80 + Offset, Height, true, true);
+					AddVertex(MeshData, Tile, 148 + Offset, Height, true, true);
 
-					AddVertex(MeshData, Tile, 1996 - Offset, Height, true);
-					AddVertex(MeshData, Tile, 2128 - Offset, Height, true);
-					AddVertex(MeshData, Tile, 2064 - Offset, Height, true);
+					AddVertex(MeshData, Tile, 1996 - Offset, Height, true, true);
+					AddVertex(MeshData, Tile, 2128 - Offset, Height, true, true);
+					AddVertex(MeshData, Tile, 2064 - Offset, Height, true, true);
 
 					if (Col < 8 + Row)
 					{
-						AddVertex(MeshData, Tile, 16 + Offset, Height, true);
-						AddVertex(MeshData, Tile, 148 + Offset, Height, true);
-						AddVertex(MeshData, Tile, 84 + Offset, Height, true);
+						AddVertex(MeshData, Tile, 16 + Offset, Height, true, true);
+						AddVertex(MeshData, Tile, 148 + Offset, Height, true, true);
+						AddVertex(MeshData, Tile, 84 + Offset, Height, true, true);
 
-						AddVertex(MeshData, Tile, 1996 - Offset, Height, true);
-						AddVertex(MeshData, Tile, 2060 - Offset, Height, true);
-						AddVertex(MeshData, Tile, 2128 - Offset, Height, true);
+						AddVertex(MeshData, Tile, 1996 - Offset, Height, true, true);
+						AddVertex(MeshData, Tile, 2060 - Offset, Height, true, true);
+						AddVertex(MeshData, Tile, 2128 - Offset, Height, true, true);
 					}
 				}
 			}
@@ -701,9 +701,10 @@ void ATerrainActor::GenerateTerrainTileRightCornerWall(FMeshData& MeshData, cons
  * @param Height The height of the vertex in height units. If <i>Absolute</i> is <b>true</b>,
  *               the height is used as specified and not in height units.
  * @param Absolute If <b>true</b>, the height is used as is and is not multiplied with the height unit.  
+ * @param NoDistortion If <b>true</b>, the vertext will be distorted, otherwise not.
  */
 void ATerrainActor::AddVertex(FMeshData& MeshData, const FTile& Tile, const int32 Index, const double Height,
-                              const bool Absolute) const
+                              const bool Absolute, const bool NoDistortion) const
 {
 	// Get the coordinates of the position vector of the tile.
 	const auto Px = Tile.Position.X * TILE_WIDTH
@@ -729,9 +730,13 @@ void ATerrainActor::AddVertex(FMeshData& MeshData, const FTile& Tile, const int3
 	// If the vertex don't exist, add it to the map and the array
 	if (!MeshData.VertexMap.Contains(Key))
 	{
+		// Calculation distortion
+		const auto N = NoDistortion
+			               ? FVector::Zero()
+			               : Noise(Vertex, NoiseParameterX, NoiseParameterY, NoiseParameterZ);
 		// Add to map and array
 		MeshData.VertexMap.Add(Key, MeshData.VertexArray.Num());
-		MeshData.VertexArray.Add(Vertex);
+		MeshData.VertexArray.Add(Vertex + N);
 		// Update bounds
 		MeshData.MinimalX = FMath::Min(MeshData.MinimalX, Vertex.X);
 		MeshData.MaximalX = FMath::Max(MeshData.MaximalX, Vertex.X);
@@ -1057,4 +1062,55 @@ TArray<FVector> ATerrainActor::CalculateNormalArray(const FMeshData& MeshData)
 
 	// Return the array
 	return Normals;
+}
+
+/**
+ * Calculates a noise value for the specified coordinates and the noise parameter.
+ * 
+ * @param Px X coordinate. 
+ * @param Py Y coordinate.
+ * @param Params Noise parameter.
+ * 
+ * @return The noise value. 
+ */
+double ATerrainActor::Noise(const double Px, const double Py, const FNoiseParameter& Params)
+{
+	// Normalize coordinates
+	const auto Nx = Px / Params.Size.X + Params.Offset.X;
+	const auto Ny = Py / Params.Size.Y + Params.Offset.Y;
+
+	// Cumulative noise value
+	auto E = 0.0;
+	// Cumulative frequency value
+	auto F = 0.0;
+	// Iterate over all octaves
+	for (auto Oct = 0; Oct < Params.Octaves; Oct++)
+	{
+		const auto Fv = Params.Frequency * FMath::Pow(2.0, Oct);
+		E += FMath::PerlinNoise2D(FVector2D(Nx * Fv, Ny * Fv));
+		F += 1.0 / Fv;
+	}
+	// Normalize result noise value
+	E = FMath::Pow(E / F, Params.Redistribution);
+	// Apply amplitude and return the noise value
+	return E * Params.Amplitude;
+}
+
+/**
+ * Calculates a noise vector based on the specified vertex and the noise parameter for each axis.
+ * 
+ * @param Vertex Original vertex.
+ * @param ParamsX Noise parameter for X axis.
+ * @param ParamsY Noise parameter for Y axis.
+ * @param ParamsZ Noise parameter for Z axis.
+ * 
+ * @return The noise vector. 
+ */
+FVector ATerrainActor::Noise(const FVector& Vertex, const FNoiseParameter& ParamsX, const FNoiseParameter& ParamsY,
+                             const FNoiseParameter& ParamsZ)
+{
+	const auto X = Noise(Vertex.Y, Vertex.Z, ParamsX);
+	const auto Y = Noise(Vertex.X, Vertex.Z, ParamsY);
+	const auto Z = Noise(Vertex.X, Vertex.Y, ParamsZ);
+	return FVector(X, Y, Z);
 }
