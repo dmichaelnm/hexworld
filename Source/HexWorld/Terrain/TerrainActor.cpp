@@ -736,6 +736,7 @@ void ATerrainActor::AddVertex(FMeshData& MeshData, const FTile& Tile, const int3
 			               : Noise(Vertex, NoiseParameterX, NoiseParameterY, NoiseParameterZ);
 		// Add to map and array
 		MeshData.VertexMap.Add(Key, MeshData.VertexArray.Num());
+		MeshData.RawVertexArray.Add(Vertex);
 		MeshData.VertexArray.Add(Vertex + N);
 		// Update bounds
 		MeshData.MinimalX = FMath::Min(MeshData.MinimalX, Vertex.X);
@@ -1001,7 +1002,7 @@ TArray<FVector2D> ATerrainActor::CalculateUVArray(const FMeshData& MeshData)
 	const auto DiffY = MeshData.MaximalY - MeshData.MinimalY;
 
 	// Iterate over all vertices
-	for (const auto Vertex : MeshData.VertexArray)
+	for (const auto Vertex : MeshData.RawVertexArray)
 	{
 		// Calculate the UV coordinates and add the vector to the array
 		const auto U = Vertex.X / DiffX;

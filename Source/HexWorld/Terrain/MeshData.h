@@ -21,6 +21,11 @@ struct FMeshData
 	 * A map between vertices and their indices. 
 	 */
 	TMap<UE::Geometry::FVector3i, int32> VertexMap;
+
+	/**
+	 * Array containing the raw vertices before they are distorted.
+	 */
+	TArray<FVector> RawVertexArray;
 	
 	/**
 	 * Array containing the vertices of the mesh.
