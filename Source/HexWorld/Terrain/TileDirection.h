@@ -1,4 +1,9 @@
-﻿#pragma once
+﻿//
+// (C) Copyright 2024 Dirk Michael
+// dirkmichaelnm@gmail.com
+//
+
+#pragma once
 
 #include "CoreMinimal.h"
 
