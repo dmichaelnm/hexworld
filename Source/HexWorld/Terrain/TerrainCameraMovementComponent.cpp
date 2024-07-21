@@ -132,14 +132,24 @@ void UTerrainCameraMovementComponent::BasicMovementControl(const double AxisValu
 	// Move only, if movement is enabled
 	if (!IsCameraDisabled())
 	{
-		// Calculate delta movement vector
+		// Create movement vector
 		const auto Movement = FVector(
 			AxisValueX * GetCurrentMovementSpeed(),
 			AxisValueY * GetCurrentMovementSpeed(),
 			0.0
 		);
+
 		// Apply movement to camera
 		CameraOwner->AddActorLocalOffset(Movement, true);
+		// Get new location
+		const auto Location = CameraOwner->GetActorLocation();
+		// Get terrain size
+		const auto [MinimalX, MinimalY, MaximalX, MaximalY] = CameraOwner->GetTerrainSize();
+		// Clamp location
+		const auto X = Location.X < MinimalX ? MinimalX : Location.X > MaximalX ? MaximalX : Location.X;
+		const auto Y = Location.Y < MinimalY ? MinimalY : Location.Y > MaximalY ? MaximalY : Location.Y;
+		// Apply new clamped location
+		CameraOwner->SetActorLocation(FVector(X, Y, Location.Z));
 	}
 }
 

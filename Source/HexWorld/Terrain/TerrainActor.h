@@ -10,6 +10,7 @@
 #include "NoiseParameter.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
+#include "TerrainSize.h"
 #include "Tile.h"
 #include "TileDirection.h"
 #include "TerrainActor.generated.h"
@@ -135,6 +136,13 @@ public:
 	UFUNCTION(CallInEditor, Category = "Terrain Properties")
 	void Build();
 
+	/**
+	 * Returns a struct containing information about the size of the terrain.
+	 * 
+	 * @return The terrain size struct.
+	 */
+	virtual FTerrainSize GetBounds() const;
+
 private:
 	// Attributes
 
@@ -153,6 +161,11 @@ private:
 	 * Index = X + Y * SizeX
 	 */
 	TArray<FTile> Tiles;
+
+	/**
+	 * Terrain size struct.
+	 */
+	FTerrainSize TerrainSize;
 
 	// Methods
 

@@ -7,6 +7,7 @@
 
 #include "CoreMinimal.h"
 #include "IntVectorTypes.h"
+#include "TerrainSize.h"
 #include "MeshData.generated.h"
 
 /**
@@ -38,22 +39,7 @@ struct FMeshData
 	TArray<int32> TriangleArray;
 
 	/**
-	 * The smallest X coordinate of all vertices. 
+	 * Struct with information about the size of the terrain.
 	 */
-	double MinimalX;
-
-	/**
-	 * The greatest X coordinate of all vertices.
-	 */
-	double MaximalX;
-	
-	/**
-	 * The smallest Y coordinate of all vertices. 
-	 */
-	double MinimalY;
-	
-	/**
-	 * The greatest Y coordinate of all vertices.
-	 */
-	double MaximalY;
+	FTerrainSize TerrainSize;
 };

@@ -6,11 +6,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TerrainSize.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "TerrainCameraPawn.generated.h"
+
+// Defines the log category of this class.
+DECLARE_LOG_CATEGORY_EXTERN(TerrainCameraPawn, Log, All);
 
 class UTerrainCameraMovementComponent;
 
@@ -105,6 +109,13 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraArm() const { return CameraArm; }
 
 	/**
+	 * Returns the terrain size.
+	 * 
+	 * @return Terrain size struct. 
+	 */
+	FORCEINLINE FTerrainSize GetTerrainSize() const { return TerrainSize; }
+	
+	/**
 	 * Returns the current length of the camera arm.
 	 * 
 	 * @return Current camera arm length.  
@@ -136,4 +147,11 @@ public:
 	 * Set the zoom to the default value.
 	 */
 	virtual void SetToDefaultZoom();
+
+private:
+	/**
+	 * Terrain size struct.
+	 */
+	FTerrainSize TerrainSize;
+	
 };

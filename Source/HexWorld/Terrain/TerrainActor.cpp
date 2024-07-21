@@ -78,7 +78,7 @@ const int32 EdgeVertices[6][35] = {
 ATerrainActor::ATerrainActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	// Create procedural mesh component and set it as root component.
 	MeshComponent = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("Procedural Mesh Component"));
@@ -99,6 +99,11 @@ ATerrainActor::ATerrainActor()
 void ATerrainActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(TerrainActor, Display, TEXT("BeginPlay"));
+
+	Clear();
+	Build();
 }
 
 /**
@@ -141,6 +146,8 @@ void ATerrainActor::Build()
 
 	// Generate terrain mesh data.
 	const auto TerrainMeshData = GenerateTerrainMeshData();
+	// Store terrain size infos
+	TerrainSize = TerrainMeshData.TerrainSize;
 	// Generate dynamic terrain material
 	const auto DynamicTerrainMaterial = UMaterialInstanceDynamic::Create(
 		TerrainMaterial, nullptr, TEXT("Dynamic Terrain Material"));
@@ -158,13 +165,28 @@ void ATerrainActor::Build()
 }
 
 /**
+ * Returns a struct containing information about the size of the terrain.
+ * 
+ * @return The terrain size struct.
+ */
+FTerrainSize ATerrainActor::GetBounds() const
+{
+	return TerrainSize;
+}
+
+
+/**
  * Reads the terrain data from the topography texture and initializes the tiles array.
  */
 void ATerrainActor::ReadTopography()
 {
 	// Apply properties to the topography texture.
 	Topography->CompressionSettings = TC_VectorDisplacementmap;
+#if WITH_EDITOR	
 	Topography->MipGenSettings = TMGS_NoMipmaps;
+#else
+	Topography->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+#endif	
 	Topography->Filter = TF_Nearest;
 	Topography->SRGB = false;
 	Topography->UpdateResource();
@@ -739,10 +761,10 @@ void ATerrainActor::AddVertex(FMeshData& MeshData, const FTile& Tile, const int3
 		MeshData.RawVertexArray.Add(Vertex);
 		MeshData.VertexArray.Add(Vertex + N);
 		// Update bounds
-		MeshData.MinimalX = FMath::Min(MeshData.MinimalX, Vertex.X);
-		MeshData.MaximalX = FMath::Max(MeshData.MaximalX, Vertex.X);
-		MeshData.MinimalY = FMath::Min(MeshData.MinimalY, Vertex.Y);
-		MeshData.MaximalY = FMath::Max(MeshData.MaximalY, Vertex.Y);
+		MeshData.TerrainSize.MinimalX = FMath::Min(MeshData.TerrainSize.MinimalX, Vertex.X);
+		MeshData.TerrainSize.MaximalX = FMath::Max(MeshData.TerrainSize.MaximalX, Vertex.X);
+		MeshData.TerrainSize.MinimalY = FMath::Min(MeshData.TerrainSize.MinimalY, Vertex.Y);
+		MeshData.TerrainSize.MaximalY = FMath::Max(MeshData.TerrainSize.MaximalY, Vertex.Y);
 	}
 	// Add new triangle index
 	MeshData.TriangleArray.Add(MeshData.VertexMap[Key]);
@@ -998,8 +1020,8 @@ TArray<FVector2D> ATerrainActor::CalculateUVArray(const FMeshData& MeshData)
 	auto UVs = TArray<FVector2D>();
 
 	// Get width and length of the entire mesh
-	const auto DiffX = MeshData.MaximalX - MeshData.MinimalX;
-	const auto DiffY = MeshData.MaximalY - MeshData.MinimalY;
+	const auto DiffX = MeshData.TerrainSize.MaximalX - MeshData.TerrainSize.MinimalX;
+	const auto DiffY = MeshData.TerrainSize.MaximalY - MeshData.TerrainSize.MinimalY;
 
 	// Iterate over all vertices
 	for (const auto Vertex : MeshData.RawVertexArray)

@@ -5,7 +5,12 @@
 
 #include "TerrainCameraPawn.h"
 
+#include "TerrainActor.h"
 #include "TerrainCameraMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+
+// Defines the log category of this class.
+DEFINE_LOG_CATEGORY(TerrainCameraPawn)
 
 /**
  * Default constructor.
@@ -35,7 +40,7 @@ ATerrainCameraPawn::ATerrainCameraPawn()
 	CameraArm->SetAbsolute(false, false, false);
 	CameraArm->TargetArmLength = DefaultZoomLength;
 	CameraArm->SetRelativeRotation(DefaultRotation);
-	CameraArm->bDoCollisionTest = false;
+	CameraArm->bDoCollisionTest = true;
 	CameraArm->bEnableCameraLag = true; // for smoother movements
 	CameraArm->bEnableCameraRotationLag = true;
 	CameraArm->bInheritPitch = false; // needs to be false for zoom to be updated in real time
@@ -58,7 +63,24 @@ ATerrainCameraPawn::ATerrainCameraPawn()
 void ATerrainCameraPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	SetActorLocation(FVector(0.0, 0.0, 100.0));
+
+	auto Actors = TArray<AActor*>();
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATerrainActor::StaticClass(), Actors);
+	const auto Terrain = static_cast<ATerrainActor*>(Actors[0]);
+	if (IsValid(Terrain))
+	{
+		TerrainSize = Terrain->GetBounds();
+		const auto X = TerrainSize.MinimalX + (TerrainSize.MaximalX - TerrainSize.MinimalX) / 2.0;
+		const auto Y = TerrainSize.MinimalY + (TerrainSize.MaximalY - TerrainSize.MinimalY) / 2.0;
+		UE_LOG(TerrainCameraPawn, Display, TEXT("Terrain Actor found (Location: %f:%f)."), X, Y);
+
+		SetActorLocation(FVector(X, Y, 100.0));
+	}
+	else
+	{
+		SetActorLocation(FVector(0, 0, 100.0));
+		UE_LOG(TerrainCameraPawn, Warning, TEXT("Terrain Actor not found."));
+	}
 	SetActorRotation(FRotator::ZeroRotator);
 }
 
@@ -68,6 +90,12 @@ void ATerrainCameraPawn::BeginPlay()
 void ATerrainCameraPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	auto Forward = GetActorForwardVector();
+	Forward.Normalize();
+	const auto Upper = FVector(0.0, 0.0, 1.0);
+	auto Right = FVector::CrossProduct(Forward, Upper);
+	Right.Normalize();
 }
 
 /**
